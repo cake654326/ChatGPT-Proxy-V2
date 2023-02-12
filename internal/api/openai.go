@@ -69,6 +69,12 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 	}
 	defer resp.Body.Close()
 
+	// Check status code
+	if resp.StatusCode != 200 {
+		c.JSON(resp.StatusCode, gin.H{"message": "Invalid request"})
+		return
+	}
+
 	// Use a buffer to store the response
 	buf := make([]byte, 1024)
 	for {
