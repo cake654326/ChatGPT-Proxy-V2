@@ -42,7 +42,7 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 		config.Mappings["top_p"]:            request.TopP,
 		config.Mappings["stop"]:             request.Stop,
 		config.Mappings["max_tokens"]:       request.MaxTokens,
-		config.Mappings["stream"]:           true,
+		config.Mappings["stream"]:           request.Stream,
 		config.Mappings["prompt"]:           request.Prompt,
 	}
 	// Create request
@@ -72,7 +72,6 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 	resp, err := client.Do(req)
 	if err != nil {
 		c.JSON(500, gin.H{"message": "Internal server error", "error": err.Error()})
-		println(err.Error())
 		return
 	}
 	defer resp.Body.Close()
@@ -83,25 +82,74 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 		return
 	}
 
-	// Use a buffer to store the response
-	buf := make([]byte, 1024)
-	for {
-		n, err := resp.Body.Read(buf)
-		if err != nil && err != io.EOF {
+	if request.Stream {
+		// Use a buffer to store the response
+		buf := make([]byte, 1024)
+		for {
+			n, err := resp.Body.Read(buf)
+			if err != nil && err != io.EOF {
+				c.JSON(500, gin.H{"message": "Internal server error"})
+				return
+			}
+			if n == 0 {
+				break
+			}
+			// Write the response chunk to the writer
+			if _, err := writer.Write(buf[:n]); err != nil {
+				c.JSON(500, gin.H{"message": "Internal server error"})
+				return
+			}
+			// Flush the writer to ensure the response is sent immediately
+			if f, ok := writer.(http.Flusher); ok {
+				f.Flush()
+			}
+		}
+	} else {
+		// Read response body
+		response_body := &bytes.Buffer{}
+		_, err := response_body.ReadFrom(resp.Body)
+		if err != nil {
 			c.JSON(500, gin.H{"message": "Internal server error"})
 			return
 		}
-		if n == 0 {
-			break
+		full_text := ""
+		// Loop through each line of the response body choices finish_details is not null
+		for {
+			line, err := response_body.ReadString('\n')
+			if err != nil && err != io.EOF {
+				c.JSON(500, gin.H{"message": "Internal server error"})
+				return
+			}
+			if line == "data: [DONE]" {
+				break
+			} else if line == "" {
+				continue
+			} else if line == "\n" {
+				continue
+			}
+			// Remove the "data: " prefix
+			line = line[6:]
+			// Parse the line as JSON
+			line_json := map[string]interface{}{}
+			if json.Unmarshal([]byte(line), &line_json) != nil {
+				c.JSON(500, gin.H{"message": "Internal server error"})
+				return
+			}
+			// Look for line_json["choices"][0]["finish_details"]
+			if line_json["choices"] != nil {
+				if line_json["choices"].([]interface{})[0] != nil {
+					// Check for text
+					if line_json["choices"].([]interface{})[0].(map[string]interface{})["text"] != nil {
+						// Append text to full_text
+						full_text += line_json["choices"].([]interface{})[0].(map[string]interface{})["text"].(string)
+					}
+					if line_json["choices"].([]interface{})[0].(map[string]interface{})["finish_details"] != nil {
+						response_body = bytes.NewBufferString(full_text)
+						break
+					}
+				}
+			}
 		}
-		// Write the response chunk to the writer
-		if _, err := writer.Write(buf[:n]); err != nil {
-			c.JSON(500, gin.H{"message": "Internal server error"})
-			return
-		}
-		// Flush the writer to ensure the response is sent immediately
-		if f, ok := writer.(http.Flusher); ok {
-			f.Flush()
-		}
+		c.Data(200, "application/json", response_body.Bytes())
 	}
 }

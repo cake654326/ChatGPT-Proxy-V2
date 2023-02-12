@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"time"
 
 	ratelimit "github.com/JGLTechnologies/gin-rate-limit"
@@ -39,9 +40,22 @@ func init() {
 	)
 }
 
+func secret_auth(c *gin.Context) {
+	if os.Getenv("SECRET") == "" {
+		return
+	}
+	auth_header := c.GetHeader("Secret")
+	if auth_header == os.Getenv("SECRET") {
+		c.JSON(401, gin.H{"message": "Unauthorized"})
+		c.Abort()
+		return
+	}
+}
+
 func main() {
 	handler := gin.Default()
 	handler.Use(limit_middleware)
+	handler.Use(secret_auth)
 	handler.POST("/completions", handlers.Completions)
 	handler.Run("127.0.0.1:10101")
 }

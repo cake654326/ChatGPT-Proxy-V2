@@ -14,4 +14,5 @@ type CompletionRequest struct {
 	Stop            []string `json:"stop"`
 	PresencePenalty float32  `json:"presence_penalty"`
 	Authorization   string   `json:"authorization"`
+	Stream          bool     `json:"stream"`
 }
