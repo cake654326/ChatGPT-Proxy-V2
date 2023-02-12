@@ -144,12 +144,23 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 						full_text += line_json["choices"].([]interface{})[0].(map[string]interface{})["text"].(string)
 					}
 					if line_json["choices"].([]interface{})[0].(map[string]interface{})["finish_details"] != nil {
-						response_body = bytes.NewBufferString(full_text)
 						break
 					}
 				}
 			}
 		}
-		c.Data(200, "application/json", response_body.Bytes())
+		response_dict := map[string]interface{}{
+			"choices": []map[string]interface{}{
+				{
+					"text": full_text,
+				},
+			},
+		}
+		response_json, err := json.Marshal(response_dict)
+		if err != nil {
+			c.JSON(500, gin.H{"message": "Internal server error"})
+			return
+		}
+		c.Data(200, "application/json", response_json)
 	}
 }
