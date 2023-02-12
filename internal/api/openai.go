@@ -34,12 +34,12 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 		"Authorization": []string{request.Authorization},
 		"Content-Type":  []string{"application/json"},
 	}
-	// Create body JSON
-	if request.Model == "" {
-		request.Model = config.Model
+	request.Stream = true // Temporary fix for OpenAI API
+	if request.Paid {
+		config.Model = "text-davinci-002-render-paid"
 	}
 	body := map[string]interface{}{
-		config.Mappings["model"]:            request.Model,
+		config.Mappings["model"]:            config.Model,
 		config.Mappings["presence_penalty"]: request.PresencePenalty,
 		config.Mappings["temperature"]:      request.Temperature,
 		config.Mappings["top_p"]:            request.TopP,
