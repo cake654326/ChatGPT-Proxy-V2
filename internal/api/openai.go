@@ -35,14 +35,14 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter) {
 	}
 	// Create body JSON
 	body := map[string]interface{}{
-		"model":            config.Model,
-		"presence_penalty": request.PresencePenalty,
-		"temperature":      request.Temperature,
-		"top_p":            request.TopP,
-		"stop":             request.Stop,
-		"max_tokens":       request.MaxTokens,
-		"stream":           true,
-		"query":            request.Prompt,
+		config.Mappings["model"]:            config.Model,
+		config.Mappings["presence_penalty"]: request.PresencePenalty,
+		config.Mappings["temperature"]:      request.Temperature,
+		config.Mappings["top_p"]:            request.TopP,
+		config.Mappings["stop"]:             request.Stop,
+		config.Mappings["max_tokens"]:       request.MaxTokens,
+		config.Mappings["stream"]:           true,
+		config.Mappings["prompt"]:           request.Prompt,
 	}
 	// Create request
 	req, err := http.NewRequest("POST", config.Endpoint, nil)
