@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/acheong08/ChatGPT-V2/internal/types"
 	"github.com/gin-gonic/gin"
@@ -66,11 +67,12 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 	req.Body = io.NopCloser(bytes.NewReader(body_json))
 	// Send request
 	client := http.Client{
-		Timeout: 360,
+		Timeout: 360 * time.Second,
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		c.JSON(500, gin.H{"message": "Internal server error"})
+		c.JSON(500, gin.H{"message": "Internal server error", "error": err.Error()})
+		println(err.Error())
 		return
 	}
 	defer resp.Body.Close()
