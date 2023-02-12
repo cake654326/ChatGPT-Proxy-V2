@@ -35,8 +35,11 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 		"Content-Type":  []string{"application/json"},
 	}
 	// Create body JSON
+	if request.Model == "" {
+		request.Model = config.Model
+	}
 	body := map[string]interface{}{
-		config.Mappings["model"]:            config.Model,
+		config.Mappings["model"]:            request.Model,
 		config.Mappings["presence_penalty"]: request.PresencePenalty,
 		config.Mappings["temperature"]:      request.Temperature,
 		config.Mappings["top_p"]:            request.TopP,
