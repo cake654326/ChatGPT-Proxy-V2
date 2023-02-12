@@ -35,6 +35,11 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 		"Content-Type":  []string{"application/json"},
 	}
 	// Create body JSON
+	if request.Paid {
+		config.Model = "text-davinci-002-render-paid"
+	} else {
+		config.Model = "text-davinci-002-render"
+	}
 	body := map[string]interface{}{
 		config.Mappings["model"]:            config.Model,
 		config.Mappings["presence_penalty"]: request.PresencePenalty,
