@@ -27,7 +27,7 @@ func init() {
 }
 
 // Returns a stream of completions from the OpenAI API.
-func Send(request types.CompletionRequest, writer gin.ResponseWriter) {
+func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Context) {
 	// Create HTTP headers
 	headers := http.Header{
 		"Authorization": []string{request.Authorization},
@@ -47,21 +47,25 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter) {
 	// Create request
 	req, err := http.NewRequest("POST", config.Endpoint, nil)
 	if err != nil {
-		log.Fatal(err)
+		c.JSON(500, gin.H{"message": "Internal server error"})
+		return
+
 	}
 	// Add headers to request
 	req.Header = headers
 	// Build request body
 	body_json, err := json.Marshal(body)
 	if err != nil {
-		log.Fatal(err)
+		c.JSON(500, gin.H{"message": "Internal server error"})
+		return
 	}
 	// Add body to request
 	req.Body = io.NopCloser(bytes.NewReader(body_json))
 	// Send request
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		c.JSON(500, gin.H{"message": "Internal server error"})
+		return
 	}
 	defer resp.Body.Close()
 
@@ -70,14 +74,16 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter) {
 	for {
 		n, err := resp.Body.Read(buf)
 		if err != nil && err != io.EOF {
-			log.Fatal(err)
+			c.JSON(500, gin.H{"message": "Internal server error"})
+			return
 		}
 		if n == 0 {
 			break
 		}
 		// Write the response chunk to the writer
 		if _, err := writer.Write(buf[:n]); err != nil {
-			log.Fatal(err)
+			c.JSON(500, gin.H{"message": "Internal server error"})
+			return
 		}
 		// Flush the writer to ensure the response is sent immediately
 		if f, ok := writer.(http.Flusher); ok {

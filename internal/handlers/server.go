@@ -33,5 +33,5 @@ func Completions(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
 
 	// Send request to OpenAI API and stream data to client
-	api.Send(request, c.Writer)
+	api.Send(request, c.Writer, c)
 }
