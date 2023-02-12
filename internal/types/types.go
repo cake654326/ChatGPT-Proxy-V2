@@ -1,9 +1,10 @@
 package types
 
 type Config struct {
-	Endpoint string            `json:"endpoint"`
-	Model    string            `json:"model"`
-	Mappings map[string]string `json:"mappings"`
+	Endpoint    string            `json:"endpoint"`
+	Model       string            `json:"model"`
+	Mappings    map[string]string `json:"mappings"`
+	SecretModel string            `json:"secret_model"`
 }
 
 type CompletionRequest struct {
