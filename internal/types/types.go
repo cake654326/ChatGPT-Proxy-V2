@@ -11,6 +11,6 @@ type CompletionRequest struct {
 	Temperature     float32  `json:"temperature"`
 	TopP            float32  `json:"top_p"`
 	Stop            []string `json:"stop"`
-	PresencePenalty string   `json:"presence_penalty"`
+	PresencePenalty float32  `json:"presence_penalty"`
 	Authorization   string   `json:"authorization"`
 }

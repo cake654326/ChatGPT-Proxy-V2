@@ -11,7 +11,7 @@ func Completions(c *gin.Context) {
 	// Map request body to CompletionRequest struct
 	var request types.CompletionRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(400, gin.H{"message": "Invalid request"})
+		c.JSON(400, gin.H{"message": "Invalid request", "error": err})
 		return
 	}
 	// Check if authorization header is present
