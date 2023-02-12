@@ -51,6 +51,9 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 		return
 
 	}
+	// Set timeout as 360 seconds
+	req.Header.Set("Connection", "keep-alive")
+	req.Header.Set("Keep-Alive", "360")
 	// Add headers to request
 	req.Header = headers
 	// Build request body
