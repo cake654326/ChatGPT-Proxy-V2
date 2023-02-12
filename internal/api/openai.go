@@ -105,7 +105,7 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 			// remove config.SecretModel from buf_str
 			buf_str = regexp.MustCompile(config.SecretModel).ReplaceAllString(buf_str, "text-davinci-002-render")
 			// Regex remove cmpl-6j6Ha2KTxZblH9BIu5FWhs1xUgpc3
-			buf_str = regexp.MustCompile(`"id" :"cmpl-[a-zA-Z0-9]{29}",`).ReplaceAllString(buf_str, "")
+			buf_str = regexp.MustCompile(`"id": "cmpl-[a-zA-Z0-9]{29}",`).ReplaceAllString(buf_str, "")
 			// Regex replace "created": 1676206997 with "created": 0
 			buf_str = regexp.MustCompile(`"created": [0-9]{10},`).ReplaceAllString(buf_str, "")
 			// Make new buf from buf_str
