@@ -45,7 +45,7 @@ func secret_auth(c *gin.Context) {
 		return
 	}
 	auth_header := c.GetHeader("Secret")
-	if auth_header == os.Getenv("SECRET") {
+	if auth_header != os.Getenv("SECRET") {
 		c.JSON(401, gin.H{"message": "Unauthorized"})
 		c.Abort()
 		return
