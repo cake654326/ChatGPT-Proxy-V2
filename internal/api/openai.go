@@ -65,7 +65,10 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 	// Add body to request
 	req.Body = io.NopCloser(bytes.NewReader(body_json))
 	// Send request
-	resp, err := http.DefaultClient.Do(req)
+	client := http.Client{
+		Timeout: 360,
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		c.JSON(500, gin.H{"message": "Internal server error"})
 		return
