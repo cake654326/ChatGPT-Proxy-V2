@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/acheong08/ChatGPT-V2/internal/types"
@@ -99,6 +100,18 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 			if n == 0 {
 				break
 			}
+			// Convert buf to string
+			buf_str := string(buf[:n])
+			// remove config.SecretModel from buf_str
+			buf_str = regexp.MustCompile(config.SecretModel).ReplaceAllString(buf_str, "text-davinci-002-render")
+			// Regex remove cmpl-6j6Ha2KTxZblH9BIu5FWhs1xUgpc3
+			buf_str = regexp.MustCompile("cmpl-[a-zA-Z0-9]{29}").ReplaceAllString(buf_str, "...")
+			// Regex replace "created": 1676206997 with "created": 0
+			buf_str = regexp.MustCompile(`"created": [0-9]{10}`).ReplaceAllString(buf_str, `"created": 0`)
+			// Make new buf from buf_str
+			buf := []byte(buf_str)
+			// Get new n from buf2
+			n = len(buf)
 			// Write the response chunk to the writer
 			if _, err := writer.Write(buf[:n]); err != nil {
 				c.JSON(500, gin.H{"message": "Internal server error"})
