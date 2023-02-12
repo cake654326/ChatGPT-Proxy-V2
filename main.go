@@ -43,5 +43,5 @@ func main() {
 	handler := gin.Default()
 	handler.Use(limit_middleware)
 	handler.POST("/completions", handlers.Completions)
-	handler.Run(":8080")
+	handler.Run("127.0.0.1:10101")
 }
