@@ -37,7 +37,11 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 	}
 	request.Stream = true // Temporary fix for OpenAI API
 	if request.Paid {
+		println("PAID")
 		config.Model = "text-davinci-002-render-paid"
+	} else {
+		println("FREE")
+		config.Model = "text-davinci-002-render"
 	}
 	body := map[string]interface{}{
 		config.Mappings["model"]:            config.Model,
