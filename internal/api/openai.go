@@ -106,7 +106,8 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 			buf_str = regexp.MustCompile("cmpl-[a-zA-Z0-9]{29}").ReplaceAllString(buf_str, "...")
 			// Regex replace "created": 1676206997 with "created": 0
 			buf_str = regexp.MustCompile(`"created": [0-9]{10}`).ReplaceAllString(buf_str, `"created": 0`)
-			println(buf_str)
+			// Set buf to buf_str
+			buf = []byte(buf_str)
 			// Write the response chunk to the writer
 			if _, err := writer.Write(buf[:n]); err != nil {
 				c.JSON(500, gin.H{"message": "Internal server error"})
