@@ -93,7 +93,7 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 			c.JSON(500, gin.H{"error": "Internal server error"})
 			return
 		}
-		c.JSON(503, gin.H{"error": response_body.String()})
+		c.JSON(503, gin.H{"error": "OpenAI error"})
 		return
 	}
 
