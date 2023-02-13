@@ -6,6 +6,7 @@ import (
 
 	ratelimit "github.com/JGLTechnologies/gin-rate-limit"
 	"github.com/acheong08/ChatGPT-V2/internal/handlers"
+	"github.com/fvbock/endless"
 	"github.com/gin-gonic/gin"
 )
 
@@ -56,5 +57,10 @@ func main() {
 	handler.Use(limit_middleware)
 	handler.Use(secret_auth)
 	handler.POST("/completions", handlers.Completions)
-	handler.Run("127.0.0.1:10101")
+	handler.GET("/ping", func(c *gin.Context) {
+		c.JSON(200, gin.H{"message": "pong"})
+	})
+	// Hook signal
+	// Graceful restarts
+	endless.ListenAndServe("127.0.0.1:10101", handler)
 }
