@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	_ "embed"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"log"
@@ -17,13 +18,19 @@ import (
 var (
 	//go:embed config.json
 	config_file []byte
-	config      types.Config
+	Config      types.Config
 )
 
 // config returns the config.json file as a Config struct.
 func init() {
-	config = types.Config{}
-	if json.Unmarshal(config_file, &config) != nil {
+	Config = types.Config{}
+	// Base64 decode config.json
+	decoded_config, err := base64.StdEncoding.DecodeString(string(config_file))
+	if err != nil {
+		print(err)
+		panic(err)
+	}
+	if json.Unmarshal(decoded_config, &Config) != nil {
 		log.Fatal("Error unmarshalling config.json")
 	}
 }
@@ -35,26 +42,27 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 		"Authorization": []string{request.Authorization},
 		"Content-Type":  []string{"application/json"},
 	}
-	request.Stream = true // Temporary fix for OpenAI API
+	if !Config.Private {
+		request.Stream = true
+	}
+	// Create body JSON
 	if request.Paid {
-		println("PAID")
-		config.Model = "text-davinci-002-render-paid"
+		Config.Model = "text-davinci-002-render-paid"
 	} else {
-		println("FREE")
-		config.Model = "text-davinci-002-render"
+		Config.Model = "text-davinci-002-render"
 	}
 	body := map[string]interface{}{
-		config.Mappings["model"]:            config.Model,
-		config.Mappings["presence_penalty"]: request.PresencePenalty,
-		config.Mappings["temperature"]:      request.Temperature,
-		config.Mappings["top_p"]:            request.TopP,
-		config.Mappings["stop"]:             request.Stop,
-		config.Mappings["max_tokens"]:       request.MaxTokens,
-		config.Mappings["stream"]:           request.Stream,
-		config.Mappings["prompt"]:           request.Prompt,
+		Config.Mappings["model"]:            Config.Model,
+		Config.Mappings["presence_penalty"]: request.PresencePenalty,
+		Config.Mappings["temperature"]:      request.Temperature,
+		Config.Mappings["top_p"]:            request.TopP,
+		Config.Mappings["stop"]:             request.Stop,
+		Config.Mappings["max_tokens"]:       request.MaxTokens,
+		Config.Mappings["stream"]:           request.Stream,
+		Config.Mappings["prompt"]:           request.Prompt,
 	}
 	// Create request
-	req, err := http.NewRequest("POST", config.Endpoint, nil)
+	req, err := http.NewRequest("POST", Config.Endpoint, nil)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "Internal server error"})
 		return
@@ -86,14 +94,7 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 
 	// Check status code
 	if resp.StatusCode != 200 {
-		// Get full response body
-		response_body := &bytes.Buffer{}
-		_, err := response_body.ReadFrom(resp.Body)
-		if err != nil {
-			c.JSON(500, gin.H{"error": "Internal server error"})
-			return
-		}
-		c.JSON(503, gin.H{"error": "OpenAI error"})
+		c.JSON(523, gin.H{"error": "OpenAI error"})
 		return
 	}
 
@@ -112,11 +113,11 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 			// Convert buf to string
 			buf_str := string(buf[:n])
 			// remove config.SecretModel from buf_str
-			buf_str = regexp.MustCompile(config.SecretModel).ReplaceAllString(buf_str, "text-davinci-002-render")
+			buf_str = regexp.MustCompile(Config.SecretModel).ReplaceAllString(buf_str, "text-davinci-002-render")
 			// Regex remove cmpl-6j6Ha2KTxZblH9BIu5FWhs1xUgpc3
-			buf_str = regexp.MustCompile("cmpl-[a-zA-Z0-9]{29}").ReplaceAllString(buf_str, "...")
+			buf_str = regexp.MustCompile(`"id": "cmpl-[a-zA-Z0-9]{29}",`).ReplaceAllString(buf_str, "")
 			// Regex replace "created": 1676206997 with "created": 0
-			buf_str = regexp.MustCompile(`"created": [0-9]{10}`).ReplaceAllString(buf_str, `"created": 0`)
+			buf_str = regexp.MustCompile(`"created": [0-9]{10},`).ReplaceAllString(buf_str, "")
 			// Make new buf from buf_str
 			buf := []byte(buf_str)
 			// Get new n from buf2
@@ -171,12 +172,23 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 						full_text += line_json["choices"].([]interface{})[0].(map[string]interface{})["text"].(string)
 					}
 					if line_json["choices"].([]interface{})[0].(map[string]interface{})["finish_details"] != nil {
-						response_body = bytes.NewBufferString(full_text)
 						break
 					}
 				}
 			}
 		}
-		c.Data(200, "application/json", response_body.Bytes())
+		response_dict := map[string]interface{}{
+			"choices": []map[string]interface{}{
+				{
+					"text": full_text,
+				},
+			},
+		}
+		response_json, err := json.Marshal(response_dict)
+		if err != nil {
+			c.JSON(500, gin.H{"message": "Internal server error"})
+			return
+		}
+		c.Data(200, "application/json", response_json)
 	}
 }

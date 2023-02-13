@@ -5,6 +5,7 @@ import (
 	"time"
 
 	ratelimit "github.com/JGLTechnologies/gin-rate-limit"
+	"github.com/acheong08/ChatGPT-V2/internal/api"
 	"github.com/acheong08/ChatGPT-V2/internal/handlers"
 	"github.com/fvbock/endless"
 	"github.com/gin-gonic/gin"
@@ -17,7 +18,7 @@ func init() {
 	limit_store = ratelimit.InMemoryStore(
 		&ratelimit.InMemoryOptions{
 			Rate:  time.Minute,
-			Limit: 120,
+			Limit: 160,
 		},
 	)
 	limit_middleware = ratelimit.RateLimiter(
@@ -45,7 +46,7 @@ func secret_auth(c *gin.Context) {
 		return
 	}
 	auth_header := c.GetHeader("Secret")
-	if auth_header == os.Getenv("SECRET") {
+	if auth_header != os.Getenv("SECRET") {
 		c.JSON(401, gin.H{"message": "Unauthorized"})
 		c.Abort()
 		return
@@ -54,13 +55,11 @@ func secret_auth(c *gin.Context) {
 
 func main() {
 	handler := gin.Default()
-	handler.Use(limit_middleware)
+	if !api.Config.Private {
+		handler.Use(limit_middleware)
+	}
 	handler.Use(secret_auth)
 	handler.POST("/completions", handlers.Completions)
-	handler.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{"message": "pong"})
-	})
-	// Hook signal
-	// Graceful restarts
+
 	endless.ListenAndServe("127.0.0.1:10101", handler)
 }
