@@ -86,7 +86,14 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 
 	// Check status code
 	if resp.StatusCode != 200 {
-		c.JSON(503, gin.H{"error": "OpenAI error"})
+		// Get full response body
+		response_body := &bytes.Buffer{}
+		_, err := response_body.ReadFrom(resp.Body)
+		if err != nil {
+			c.JSON(500, gin.H{"error": "Internal server error"})
+			return
+		}
+		c.JSON(503, gin.H{"error": response_body.String()})
 		return
 	}
 
