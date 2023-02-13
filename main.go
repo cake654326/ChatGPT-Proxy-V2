@@ -5,6 +5,7 @@ import (
 	"time"
 
 	ratelimit "github.com/JGLTechnologies/gin-rate-limit"
+	"github.com/acheong08/ChatGPT-V2/internal/api"
 	"github.com/acheong08/ChatGPT-V2/internal/handlers"
 	"github.com/fvbock/endless"
 	"github.com/gin-gonic/gin"
@@ -54,6 +55,9 @@ func secret_auth(c *gin.Context) {
 
 func main() {
 	handler := gin.Default()
+	if !api.Config.Private {
+		handler.Use(limit_middleware)
+	}
 	handler.Use(secret_auth)
 	handler.POST("/completions", handlers.Completions)
 

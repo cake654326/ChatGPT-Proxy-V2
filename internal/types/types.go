@@ -5,6 +5,7 @@ type Config struct {
 	Model       string            `json:"model"`
 	Mappings    map[string]string `json:"mappings"`
 	SecretModel string            `json:"secret_model"`
+	Private     bool              `json:"private"`
 }
 
 type CompletionRequest struct {

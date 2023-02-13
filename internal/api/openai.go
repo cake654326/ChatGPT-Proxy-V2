@@ -17,13 +17,13 @@ import (
 var (
 	//go:embed config.json
 	config_file []byte
-	config      types.Config
+	Config      types.Config
 )
 
 // config returns the config.json file as a Config struct.
 func init() {
-	config = types.Config{}
-	if json.Unmarshal(config_file, &config) != nil {
+	Config = types.Config{}
+	if json.Unmarshal(config_file, &Config) != nil {
 		log.Fatal("Error unmarshalling config.json")
 	}
 }
@@ -35,24 +35,27 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 		"Authorization": []string{request.Authorization},
 		"Content-Type":  []string{"application/json"},
 	}
+	if !Config.Private {
+		request.Stream = true
+	}
 	// Create body JSON
 	if request.Paid {
-		config.Model = "text-davinci-002-render-paid"
+		Config.Model = "text-davinci-002-render-paid"
 	} else {
-		config.Model = "text-davinci-002-render"
+		Config.Model = "text-davinci-002-render"
 	}
 	body := map[string]interface{}{
-		config.Mappings["model"]:            config.Model,
-		config.Mappings["presence_penalty"]: request.PresencePenalty,
-		config.Mappings["temperature"]:      request.Temperature,
-		config.Mappings["top_p"]:            request.TopP,
-		config.Mappings["stop"]:             request.Stop,
-		config.Mappings["max_tokens"]:       request.MaxTokens,
-		config.Mappings["stream"]:           request.Stream,
-		config.Mappings["prompt"]:           request.Prompt,
+		Config.Mappings["model"]:            Config.Model,
+		Config.Mappings["presence_penalty"]: request.PresencePenalty,
+		Config.Mappings["temperature"]:      request.Temperature,
+		Config.Mappings["top_p"]:            request.TopP,
+		Config.Mappings["stop"]:             request.Stop,
+		Config.Mappings["max_tokens"]:       request.MaxTokens,
+		Config.Mappings["stream"]:           request.Stream,
+		Config.Mappings["prompt"]:           request.Prompt,
 	}
 	// Create request
-	req, err := http.NewRequest("POST", config.Endpoint, nil)
+	req, err := http.NewRequest("POST", Config.Endpoint, nil)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "Internal server error"})
 		return
@@ -103,7 +106,7 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 			// Convert buf to string
 			buf_str := string(buf[:n])
 			// remove config.SecretModel from buf_str
-			buf_str = regexp.MustCompile(config.SecretModel).ReplaceAllString(buf_str, "text-davinci-002-render")
+			buf_str = regexp.MustCompile(Config.SecretModel).ReplaceAllString(buf_str, "text-davinci-002-render")
 			// Regex remove cmpl-6j6Ha2KTxZblH9BIu5FWhs1xUgpc3
 			buf_str = regexp.MustCompile(`"id": "cmpl-[a-zA-Z0-9]{29}",`).ReplaceAllString(buf_str, "")
 			// Regex replace "created": 1676206997 with "created": 0
