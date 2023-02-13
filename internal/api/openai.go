@@ -86,7 +86,7 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 
 	// Check status code
 	if resp.StatusCode != 200 {
-		c.JSON(resp.StatusCode, gin.H{"message": "Invalid request"})
+		c.JSON(503, gin.H{"message": "OpenAI error"})
 		return
 	}
 
