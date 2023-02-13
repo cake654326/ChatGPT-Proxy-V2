@@ -45,7 +45,7 @@ func secret_auth(c *gin.Context) {
 		return
 	}
 	auth_header := c.GetHeader("Secret")
-	if auth_header == os.Getenv("SECRET") {
+	if auth_header != os.Getenv("SECRET") {
 		c.JSON(401, gin.H{"message": "Unauthorized"})
 		c.Abort()
 		return
@@ -54,13 +54,8 @@ func secret_auth(c *gin.Context) {
 
 func main() {
 	handler := gin.Default()
-	handler.Use(limit_middleware)
 	handler.Use(secret_auth)
 	handler.POST("/completions", handlers.Completions)
-	handler.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{"message": "pong"})
-	})
-	// Hook signal
-	// Graceful restarts
+
 	endless.ListenAndServe("127.0.0.1:10101", handler)
 }
