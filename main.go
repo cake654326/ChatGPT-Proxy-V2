@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/acheong08/ChatGPT-V2/internal/handlers"
+	"github.com/fvbock/endless"
 	"github.com/gin-gonic/gin"
 )
 
@@ -23,5 +24,6 @@ func main() {
 	handler := gin.Default()
 	handler.Use(secret_auth)
 	handler.POST("/completions", handlers.Completions)
-	handler.Run("127.0.0.1:10101")
+
+	endless.ListenAndServe("127.0.0.1:10101", handler)
 }
