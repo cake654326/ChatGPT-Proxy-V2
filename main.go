@@ -16,7 +16,7 @@ func init() {
 	limit_store = ratelimit.InMemoryStore(
 		&ratelimit.InMemoryOptions{
 			Rate:  time.Minute,
-			Limit: 30,
+			Limit: 120,
 		},
 	)
 	limit_middleware = ratelimit.RateLimiter(
@@ -33,8 +33,7 @@ func init() {
 			},
 			KeyFunc: func(c *gin.Context) string {
 				// Get Authorization header
-				auth_header := c.GetHeader("Authorization")
-				return auth_header
+				return c.ClientIP()
 			},
 		},
 	)
