@@ -16,3 +16,6 @@
 internal/api/config.json
 strings.txt
 internal/api/config.json.bak
+V1-private
+__pycache__/proxy.cpython-310.pyc
+proxy.py
