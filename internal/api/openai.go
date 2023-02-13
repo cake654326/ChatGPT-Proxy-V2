@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	_ "embed"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"log"
@@ -23,7 +24,13 @@ var (
 // config returns the config.json file as a Config struct.
 func init() {
 	Config = types.Config{}
-	if json.Unmarshal(config_file, &Config) != nil {
+	// Base64 decode config.json
+	decoded_config, err := base64.StdEncoding.DecodeString(string(config_file))
+	if err != nil {
+		print(err)
+		panic(err)
+	}
+	if json.Unmarshal(decoded_config, &Config) != nil {
 		log.Fatal("Error unmarshalling config.json")
 	}
 }
