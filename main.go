@@ -61,5 +61,5 @@ func main() {
 	handler.Use(secret_auth)
 	handler.POST("/completions", handlers.Completions)
 
-	endless.ListenAndServe("127.0.0.1:10101", handler)
+	endless.ListenAndServe("127.0.0.1:10102", handler)
 }
