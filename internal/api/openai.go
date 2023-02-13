@@ -56,7 +56,7 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 	// Create request
 	req, err := http.NewRequest("POST", config.Endpoint, nil)
 	if err != nil {
-		c.JSON(500, gin.H{"message": "Internal server error"})
+		c.JSON(500, gin.H{"error": "Internal server error"})
 		return
 
 	}
@@ -68,7 +68,7 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 	// Build request body
 	body_json, err := json.Marshal(body)
 	if err != nil {
-		c.JSON(500, gin.H{"message": "Internal server error"})
+		c.JSON(500, gin.H{"error": "Internal server error"})
 		return
 	}
 	// Add body to request
@@ -79,14 +79,14 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		c.JSON(500, gin.H{"message": "Internal server error", "error": err.Error()})
+		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 	defer resp.Body.Close()
 
 	// Check status code
 	if resp.StatusCode != 200 {
-		c.JSON(503, gin.H{"message": "OpenAI error"})
+		c.JSON(503, gin.H{"error": "OpenAI error"})
 		return
 	}
 
@@ -96,7 +96,7 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 		for {
 			n, err := resp.Body.Read(buf)
 			if err != nil && err != io.EOF {
-				c.JSON(500, gin.H{"message": "Internal server error"})
+				c.JSON(500, gin.H{"error": "Internal server error"})
 				return
 			}
 			if n == 0 {
@@ -116,7 +116,7 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 			n = len(buf)
 			// Write the response chunk to the writer
 			if _, err := writer.Write(buf[:n]); err != nil {
-				c.JSON(500, gin.H{"message": "Internal server error"})
+				c.JSON(500, gin.H{"error": "Internal server error"})
 				return
 			}
 			// Flush the writer to ensure the response is sent immediately
@@ -129,7 +129,7 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 		response_body := &bytes.Buffer{}
 		_, err := response_body.ReadFrom(resp.Body)
 		if err != nil {
-			c.JSON(500, gin.H{"message": "Internal server error"})
+			c.JSON(500, gin.H{"error": "Internal server error"})
 			return
 		}
 		full_text := ""
@@ -137,7 +137,7 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 		for {
 			line, err := response_body.ReadString('\n')
 			if err != nil && err != io.EOF {
-				c.JSON(500, gin.H{"message": "Internal server error"})
+				c.JSON(500, gin.H{"error": "Internal server error"})
 				return
 			}
 			if line == "data: [DONE]" {
@@ -152,7 +152,7 @@ func Send(request types.CompletionRequest, writer gin.ResponseWriter, c *gin.Con
 			// Parse the line as JSON
 			line_json := map[string]interface{}{}
 			if json.Unmarshal([]byte(line), &line_json) != nil {
-				c.JSON(500, gin.H{"message": "Internal server error"})
+				c.JSON(500, gin.H{"error": "Internal server error"})
 				return
 			}
 			// Look for line_json["choices"][0]["finish_details"]
