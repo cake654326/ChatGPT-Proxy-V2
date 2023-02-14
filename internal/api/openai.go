@@ -48,6 +48,10 @@ func Proxy(c *gin.Context) {
 	}
 	// Add content type JSON
 	req.Header.Set("Content-Type", "application/json")
+	// Set keep alive and timeout
+	req.Close = false
+	req.Header.Set("Connection", "keep-alive")
+	req.Header.Set("Keep-Alive", "timeout=360")
 	// Send request
 	client := &http.Client{Timeout: time.Second * 360}
 	resp, err := client.Do(req)
