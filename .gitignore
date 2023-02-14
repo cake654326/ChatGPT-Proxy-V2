@@ -13,9 +13,4 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
-internal/api/config.json
-strings.txt
-internal/api/config.json.bak
-V1-private
-__pycache__/proxy.cpython-310.pyc
-proxy.py
+internal/api/config.*
