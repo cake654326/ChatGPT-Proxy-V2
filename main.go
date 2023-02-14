@@ -9,6 +9,7 @@ import (
 	"github.com/acheong08/ChatGPT-V2/internal/handlers"
 	"github.com/fvbock/endless"
 	"github.com/gin-gonic/gin"
+	_ "github.com/go-redis/redis/v8"
 )
 
 var limit_middleware gin.HandlerFunc
@@ -63,7 +64,8 @@ func main() {
 		handler.Use(limit_middleware)
 	}
 	handler.Use(secret_auth)
-	handler.POST("/completions", handlers.Completions)
+	// Proxy all POST requests to https://apps.openai.com/api/
+	handler.POST("/backend-api/:path/", handlers.Proxy)
 
 	endless.ListenAndServe("127.0.0.1:"+PORT, handler)
 }
