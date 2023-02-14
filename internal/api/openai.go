@@ -49,7 +49,7 @@ func Proxy(c *gin.Context) {
 	// Add content type JSON
 	req.Header.Set("Content-Type", "application/json")
 	// Send request
-	client := &http.Client{Timeout: time.Second * 10}
+	client := &http.Client{Timeout: time.Second * 360}
 	resp, err := client.Do(req)
 	if err != nil {
 		c.JSON(500, gin.H{"message": "Internal server error", "error": err})
