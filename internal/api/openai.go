@@ -37,10 +37,20 @@ func Proxy(c *gin.Context) {
 	// Proxy all requests directly to https://apps.openai.com/api/* streamed
 	url := "https://apps.openai.com/api/" + c.Param("path")
 	// POST request with all data and headers
-	req, err := http.NewRequest("POST", url, c.Request.Body)
-	if err != nil {
-		c.JSON(500, gin.H{"message": "Internal server error", "error": err})
-		return
+	var req *http.Request
+	var err error
+	if c.Request.Method == "POST" {
+		req, err = http.NewRequest("POST", url, c.Request.Body)
+		if err != nil {
+			c.JSON(500, gin.H{"message": "Internal server error", "error": err})
+			return
+		}
+	} else if c.Request.Method == "GET" {
+		req, err = http.NewRequest("GET", url, nil)
+		if err != nil {
+			c.JSON(500, gin.H{"message": "Internal server error", "error": err})
+			return
+		}
 	}
 	// Add headers
 	for key, value := range c.Request.Header {

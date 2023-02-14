@@ -6,7 +6,6 @@ import (
 )
 
 func Proxy(c *gin.Context) {
-	println(c.Param("path"))
 	// Send request to OpenAI API and stream data to client
 	api.Proxy(c)
 }
